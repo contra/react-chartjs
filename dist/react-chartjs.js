@@ -85,10 +85,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  createClass: function(chartType, methodNames, dataKey) {
 	    var classData = {
 	      displayName: chartType + 'Chart',
-	      getInitialState: function() { return {}; },
+	      getInitialState: function() {
+	        return {
+	          chart: null
+	        };
+	      },
 	      render: function() {
 	        var _props = {
-	          ref: 'canvass'
+	          ref: 'canvas'
 	        };
 	        for (var name in this.props) {
 	          if (this.props.hasOwnProperty(name)) {
@@ -127,7 +131,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        updatePoints(nextProps, chart, dataKey);
 	        if (chart.scale) {
 	          chart.scale.xLabels = nextProps.data.labels;
+
+	            if (chart.scale.calculateXLabelRotation){
 	          chart.scale.calculateXLabelRotation();
+	            }
 	        }
 	        chart.update();
 	      }
@@ -136,9 +143,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    classData.initializeChart = function(nextProps) {
 	      var Chart = __webpack_require__(5);
 	      var el = ReactDOM.findDOMNode(this);
-	      var ctx = el.getContext("2d");
+	      var ctx = el.getContext('2d');
 	      var chart = new Chart(ctx)[chartType](nextProps.data, nextProps.options || {});
-	      this.state.chart = chart;
+	      this.setState({ chart: chart });
 	    };
 
 	    // return the chartjs instance
@@ -146,12 +153,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.state.chart;
 	    };
 
-	    // return the canvass element that contains the chart
-	    classData.getCanvass = function() {
-	      return this.refs.canvass;
+	    // return the canvas element that contains the chart
+	    classData.getCanvas = function() {
+	      return this.refs.canvas;
 	    };
-
-	    classData.getCanvas = classData.getCanvass;
 
 	    var i;
 	    for (i=0; i<extras.length; i++) {
@@ -188,13 +193,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    while(nextProps.data.length < chart.segments.length) {
 	      chart.removeData();
 	    }
+	  } else if (name === 'Radar') {
+	      chart.removeData();
+	      nextProps.data.datasets.forEach(function(set, setIndex) {
+	      set.data.forEach(function(val, pointIndex) {
+	        if (typeof(chart.datasets[setIndex][dataKey][pointIndex]) == 'undefined') {
+	          addData(nextProps, chart, setIndex, pointIndex);
+	        } else {
+	          chart.datasets[setIndex][dataKey][pointIndex].value = val;
+	        }
+	      });
+	    });
 	  } else {
 	    while (chart.scale.xLabels.length > nextProps.data.labels.length) {
 	      chart.removeData();
 	    }
 	    nextProps.data.datasets.forEach(function(set, setIndex) {
 	      set.data.forEach(function(val, pointIndex) {
-	        if (typeof(chart.datasets[setIndex][dataKey][pointIndex]) == "undefined") {
+	        if (typeof(chart.datasets[setIndex][dataKey][pointIndex]) == 'undefined') {
 	          addData(nextProps, chart, setIndex, pointIndex);
 	        } else {
 	          chart.datasets[setIndex][dataKey][pointIndex].value = val;
